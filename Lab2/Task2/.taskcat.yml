@@ -1,0 +1,16 @@
+project:
+  name: test
+  regions:
+    - us-east-1
+
+tests:
+  MyTest:
+    template: group_19.yaml
+    parameters:
+      InstanceType: t2.micro          
+      KeyName: cloudfins             
+      VpcCIDR: 10.0.0.0/16             
+      PublicSubnetCIDR: 10.0.1.0/24     
+      PrivateSubnetCIDR: 10.0.2.0/24   
+    regions:
+      - us-east-1                                           
