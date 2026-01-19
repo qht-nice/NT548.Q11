@@ -1,5 +1,6 @@
 # VPC
 resource "aws_vpc" "vpc" {
+  #checkov:skip=CKV2_AWS_11: VPC Flow Logs require IAM/KMS/CloudWatch configuration that is commonly blocked in VocLabs; out of scope for this lab
   cidr_block       = var.vpc_cidr_block
   instance_tenancy = "default"
 
@@ -8,81 +9,6 @@ resource "aws_vpc" "vpc" {
   }
 }
 
-# Enable VPC Flow Logs (Checkov: CKV2_AWS_11)
-data "aws_iam_policy_document" "vpc_flow_logs_kms_policy" {
-  #checkov:skip=CKV_AWS_109: KMS key policies commonly require broad admin permissions for account root
-  #checkov:skip=CKV_AWS_111: KMS key policies commonly allow write actions for account root
-  #checkov:skip=CKV_AWS_356: KMS key policy resources are typically "*" by design in key policies
-  statement {
-    sid    = "Enable IAM User Permissions"
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-    actions   = ["kms:*"]
-    resources = ["*"]
-  }
-}
-
-data "aws_caller_identity" "current" {}
-
-resource "aws_kms_key" "vpc_flow_logs_kms" {
-  description         = "KMS key for VPC Flow Logs CloudWatch Log Group"
-  enable_key_rotation = true
-  policy              = data.aws_iam_policy_document.vpc_flow_logs_kms_policy.json
-}
-
-resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name = "/aws/vpc/${aws_vpc.vpc.id}/flow-logs"
-  # Checkov: CKV_AWS_338 (>= 1 year)
-  retention_in_days = 365
-  # Checkov: CKV_AWS_158 (encrypt log group)
-  kms_key_id = aws_kms_key.vpc_flow_logs_kms.arn
-}
-
-data "aws_iam_policy_document" "vpc_flow_logs_assume_role" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["vpc-flow-logs.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "vpc_flow_logs_role" {
-  name               = "vpc-flow-logs-role-${aws_vpc.vpc.id}"
-  assume_role_policy = data.aws_iam_policy_document.vpc_flow_logs_assume_role.json
-}
-
-data "aws_iam_policy_document" "vpc_flow_logs_policy" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-    ]
-    resources = ["${aws_cloudwatch_log_group.vpc_flow_logs.arn}:*"]
-  }
-}
-
-resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
-  name   = "vpc-flow-logs-policy"
-  role   = aws_iam_role.vpc_flow_logs_role.id
-  policy = data.aws_iam_policy_document.vpc_flow_logs_policy.json
-}
-
-resource "aws_flow_log" "vpc_flow_logs" {
-  vpc_id               = aws_vpc.vpc.id
-  traffic_type         = "ALL"
-  log_destination_type = "cloud-watch-logs"
-  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
-  iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn
-}
 # Public Subnet
 resource "aws_subnet" "public_subnet" {
   vpc_id     = aws_vpc.vpc.id
