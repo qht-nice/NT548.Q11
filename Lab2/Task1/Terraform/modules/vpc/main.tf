@@ -9,9 +9,36 @@ resource "aws_vpc" "vpc" {
 }
 
 # Enable VPC Flow Logs (Checkov: CKV2_AWS_11)
+data "aws_iam_policy_document" "vpc_flow_logs_kms_policy" {
+  #checkov:skip=CKV_AWS_109: KMS key policies commonly require broad admin permissions for account root
+  #checkov:skip=CKV_AWS_111: KMS key policies commonly allow write actions for account root
+  #checkov:skip=CKV_AWS_356: KMS key policy resources are typically "*" by design in key policies
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_kms_key" "vpc_flow_logs_kms" {
+  description         = "KMS key for VPC Flow Logs CloudWatch Log Group"
+  enable_key_rotation = true
+  policy              = data.aws_iam_policy_document.vpc_flow_logs_kms_policy.json
+}
+
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name              = "/aws/vpc/${aws_vpc.vpc.id}/flow-logs"
-  retention_in_days = 7
+  name = "/aws/vpc/${aws_vpc.vpc.id}/flow-logs"
+  # Checkov: CKV_AWS_338 (>= 1 year)
+  retention_in_days = 365
+  # Checkov: CKV_AWS_158 (encrypt log group)
+  kms_key_id = aws_kms_key.vpc_flow_logs_kms.arn
 }
 
 data "aws_iam_policy_document" "vpc_flow_logs_assume_role" {

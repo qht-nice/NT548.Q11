@@ -62,13 +62,13 @@ module "security_group" {
 
 #EC2
 module "ec2" {
-  source                 = "./modules/ec2"
-  ami                    = var.ami
-  instance_type          = var.instance_type
-  public_subnet_id       = module.vpc.public_subnet_id
-  private_subnet_id      = module.vpc.private_subnet_id
-  public_security_group  = module.security_group.public_security_group
-  private_security_group = module.security_group.private_security_group
+  source                    = "./modules/ec2"
+  ami                       = var.ami
+  instance_type             = var.instance_type
+  public_subnet_id          = module.vpc.public_subnet_id
+  private_subnet_id         = module.vpc.private_subnet_id
+  public_security_group_id  = module.security_group.public_security_group_id
+  private_security_group_id = module.security_group.private_security_group_id
 }
 
 # Outputs
@@ -97,11 +97,11 @@ output "nat_gateway_public_ip" {
 }
 
 output "public_security_group_id" {
-  value = module.security_group.public_security_group.id
+  value = module.security_group.public_security_group_id
 }
 
 output "private_security_group_id" {
-  value = module.security_group.private_security_group.id
+  value = module.security_group.private_security_group_id
 }
 
 output "public_instance_id" {
