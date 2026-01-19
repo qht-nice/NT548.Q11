@@ -16,6 +16,11 @@
   - `AWS_ACCESS_KEY`: Khóa truy cập AWS.
   - `AWS_SECRET_ACCESS_KEY`: Khóa bí mật AWS.
 
+## Những chỗ cần thay trước khi chạy
+
+- **[CẦN THAY THẾ] IP SSH của bạn**: cập nhật biến `allowed_ssh_ip` (dạng `/32`, ví dụ `1.2.3.4/32`)
+- **Region**: đang dùng `us-east-1`
+
 ### Các bước triển khai
 
 - Tạo file pipeline 
@@ -36,7 +41,46 @@
 
 - Triển khai hạ tầng với Terraform
 
-    Đảm bảo thư mục Terraform nằm ở đúng chỗ
+    Đảm bảo thư mục Terraform nằm ở đúng chỗ: `Lab2/Task1/Terraform`
+
+## Chạy thủ công (local)
+
+1) Vào thư mục Terraform:
+
+```bash
+cd Lab2/Task1/Terraform
+```
+
+2) Set IP được phép SSH (public SG):
+
+Tạo/sửa `terraform.tfvars`:
+
+```hcl
+allowed_ssh_ip = "[CẦN THAY THẾ] YOUR_PUBLIC_IP/32"
+```
+
+3) Chạy Terraform:
+
+```bash
+terraform init
+terraform validate
+terraform plan
+terraform apply
+```
+
+Destroy:
+
+```bash
+terraform destroy
+```
+
+## Chạy tự động (GitHub Actions)
+
+- Workflow: `Lab2/Task1/.github/workflows/deploy.yml`
+- Workflow sẽ chạy khi bạn **push lên nhánh `main`**
+- Workflow có các bước:
+  - Checkov scan thư mục `Lab2/Task1/Terraform`
+  - terraform init/validate/plan/apply trên đúng thư mục `Lab2/Task1/Terraform`
 
     Chạy pipeline
 

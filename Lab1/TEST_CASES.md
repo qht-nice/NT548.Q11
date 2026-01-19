@@ -12,8 +12,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ## Test Cases
 
-### Test Case 1: VPC Resources (3 điểm)
-
+### Test Case 1: VPC Resource
 #### 1.1 VPC tồn tại
 - **Mô tả**: Kiểm tra VPC đã được tạo thành công
 - **Kiểm tra**: VPC ID tồn tại và có thể query được
@@ -24,14 +23,14 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 - **Kiểm tra**: CIDR block phải là `10.0.0.0/16`
 - **Expected**: `10.0.0.0/16`
 
-#### 1.3 VPC DNS Settings (CloudFormation only)
+#### 1.3 VPC DNS Settings (CloudFormation)
 - **Mô tả**: Kiểm tra DNS support và DNS hostnames được bật
 - **Kiểm tra**: `EnableDnsSupport` và `EnableDnsHostnames` phải là `true`
 - **Expected**: Cả hai đều là `true`
 
 ---
 
-### Test Case 2: Subnets (3 điểm)
+### Test Case 2: Subnets 
 
 #### 2.1 Public Subnet tồn tại
 - **Mô tả**: Kiểm tra Public Subnet đã được tạo
@@ -60,7 +59,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ---
 
-### Test Case 3: Internet Gateway (3 điểm)
+### Test Case 3: Internet Gateway 
 
 #### 3.1 Internet Gateway tồn tại
 - **Mô tả**: Kiểm tra Internet Gateway đã được tạo
@@ -74,7 +73,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ---
 
-### Test Case 4: NAT Gateway (1 điểm)
+### Test Case 4: NAT Gateway 
 
 #### 4.1 NAT Gateway tồn tại
 - **Mô tả**: Kiểm tra NAT Gateway đã được tạo
@@ -93,7 +92,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ---
 
-### Test Case 5: Route Tables (2 điểm)
+### Test Case 5: Route Tables
 
 #### 5.1 Public Route Table tồn tại
 - **Mô tả**: Kiểm tra Public Route Table đã được tạo
@@ -117,7 +116,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ---
 
-### Test Case 6: Security Groups (2 điểm)
+### Test Case 6: Security Groups 
 
 #### 6.1 Public Security Group tồn tại
 - **Mô tả**: Kiểm tra Public Security Group đã được tạo
@@ -146,7 +145,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ---
 
-### Test Case 7: EC2 Instances (2 điểm)
+### Test Case 7: EC2 Instances
 
 #### 7.1 Public Instance tồn tại
 - **Mô tả**: Kiểm tra Public EC2 Instance đã được tạo
@@ -200,7 +199,7 @@ Mỗi phương thức đều có script test tự động để kiểm tra các 
 
 ---
 
-### Test Case 8: Default Security Group (CloudFormation only)
+### Test Case 8: Default Security Group (CloudFormation)
 
 #### 8.1 Default Security Group tồn tại
 - **Mô tả**: Kiểm tra Default Security Group đã được tạo
@@ -273,7 +272,7 @@ cd Lab1/cloudformation
 
 # Đảm bảo stack đã được deploy
 aws cloudformation create-stack \
-  --stack-name MyVPCStack \
+  --stack-name cfStack \
   --template-body file://group_18.yaml \
   --region us-east-1
 
