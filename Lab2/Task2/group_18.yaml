@@ -119,7 +119,7 @@ Resources:
   PublicEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
+      InstanceType: t3.small
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds: 
         - !Ref PublicEC2SecurityGroup
@@ -130,7 +130,7 @@ Resources:
   PrivateEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
+      InstanceType: t3.small
       SubnetId: !Ref PrivateSubnet
       SecurityGroupIds: 
         - !Ref PrivateEC2SecurityGroup

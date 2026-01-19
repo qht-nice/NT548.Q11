@@ -31,7 +31,7 @@ _File yaml đã cấu hình với tất cả các tài nguyên cần thiết.
 ## Các bước triển khai
 ### Cách 1: Sử dụng AWS Management Console
 Bước 1: Chuẩn bị tệp YAML
-Tạo một tệp YAML duy nhất (ví dụ: group_19.yml) với tất cả các tài nguyên trong đó (VPC, Subnets, Route Tables, NAT Gateway, EC2 Instances, và Security Groups).
+Tạo một tệp YAML duy nhất (ví dụ: group_18.yml) với tất cả các tài nguyên trong đó (VPC, Subnets, Route Tables, NAT Gateway, EC2 Instances, và Security Groups).
 
 Bước 2: Triển khai CloudFormation Stack
 - Mở AWS Management Console.

@@ -13,9 +13,30 @@ Resources:
         - Key: Name
           Value: MyVPC
   
+  # Default Security Group cho VPC
+  DefaultSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Default security group for VPC
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 10.0.0.0/16
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: DefaultSecurityGroup
+  
   # Tạo Internet Gateway
   MyInternetGateway:
     Type: AWS::EC2::InternetGateway
+  
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -101,7 +122,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 113.161.91.56/32
+          CidrIp: 113.173.12.179/32
 
   # Security Group cho Private EC2 instance
   PrivateEC2SecurityGroup:
@@ -119,20 +140,87 @@ Resources:
   PublicEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
+      InstanceType: t3.small
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds: 
         - !Ref PublicEC2SecurityGroup
-      KeyName: cloudfins
-      ImageId: ami-0ebfd941bbafe70c6  
+      KeyName: vockey
+      ImageId: ami-0ecb62995f68bb549
+      Tags:
+        - Key: Name
+          Value: PublicEC2Instance
 
   # EC2 Instance trong Private Subnet
   PrivateEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.micro
+      InstanceType: t3.small
       SubnetId: !Ref PrivateSubnet
       SecurityGroupIds: 
         - !Ref PrivateEC2SecurityGroup
-      KeyName: cloudfins
-      ImageId: ami-0ebfd941bbafe70c6 
+      KeyName: vockey
+      ImageId: ami-0ecb62995f68bb549
+      Tags:
+        - Key: Name
+          Value: PrivateEC2Instance
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref MyVPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCId"
+  
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetId"
+  
+  PrivateSubnetId:
+    Description: Private Subnet ID
+    Value: !Ref PrivateSubnet
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetId"
+  
+  InternetGatewayId:
+    Description: Internet Gateway ID
+    Value: !Ref MyInternetGateway
+    Export:
+      Name: !Sub "${AWS::StackName}-InternetGatewayId"
+  
+  NATGatewayId:
+    Description: NAT Gateway ID
+    Value: !Ref MyNATGateway
+    Export:
+      Name: !Sub "${AWS::StackName}-NATGatewayId"
+  
+  PublicSecurityGroupId:
+    Description: Public EC2 Security Group ID
+    Value: !Ref PublicEC2SecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSecurityGroupId"
+  
+  PrivateSecurityGroupId:
+    Description: Private EC2 Security Group ID
+    Value: !Ref PrivateEC2SecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSecurityGroupId"
+  
+  PublicInstanceId:
+    Description: Public EC2 Instance ID
+    Value: !Ref PublicEC2Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicInstanceId"
+  
+  PrivateInstanceId:
+    Description: Private EC2 Instance ID
+    Value: !Ref PrivateEC2Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateInstanceId"
+  
+  PublicInstancePublicIP:
+    Description: Public EC2 Instance Public IP
+    Value: !GetAtt PublicEC2Instance.PublicIp
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicInstancePublicIP"

@@ -16,3 +16,19 @@ override.tf.json
 
 ### Others
 *.pem
+
+### Keys / secrets (general) ###
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+
+# Common env/secret files
+.env
+.env.*
+!.env.example
+
+# Terraform generated private key in this repo
+tfkey

@@ -12,7 +12,7 @@ phases:
   pre_build:
     commands:
       - echo "Running cfn-lint to check CloudFormation template syntax"
-      - cfn-lint group_19.yaml  
+      - cfn-lint group_18.yaml  
 
   build:
     commands:
@@ -25,4 +25,4 @@ phases:
       
 artifacts:
   files:
-    - group_19.yaml  
+    - group_18.yaml  

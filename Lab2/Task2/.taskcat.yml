@@ -5,9 +5,9 @@ project:
 
 tests:
   MyTest:
-    template: group_19.yaml
+    template: group_18.yaml
     parameters:
-      InstanceType: t2.micro          
+      InstanceType: t3.small          
       KeyName: cloudfins             
       VpcCIDR: 10.0.0.0/16             
       PublicSubnetCIDR: 10.0.1.0/24     
