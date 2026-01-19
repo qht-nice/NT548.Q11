@@ -76,7 +76,7 @@ terraform destroy
 
 ## Chạy tự động (GitHub Actions)
 
-- Workflow: `Lab2/Task1/.github/workflows/deploy.yml`
+- Workflow: `.github/workflows/deploy.yml`
 - Workflow sẽ chạy khi bạn **push lên nhánh `main`**
 - Workflow có các bước:
   - Checkov scan thư mục `Lab2/Task1/Terraform`
