@@ -13,8 +13,9 @@
 ### Các thành phần cần chuẩn bị
 - Repository GitHub chứa mã nguồn Terraform.
 - Secrets GitHub Actions:
-  - `AWS_ACCESS_KEY`: Khóa truy cập AWS.
-  - `AWS_SECRET_ACCESS_KEY`: Khóa bí mật AWS.
+  - `AWS_ACCESS_KEY_ID`: Access Key ID.
+  - `AWS_SECRET_ACCESS_KEY`: Secret Access Key.
+  - `AWS_SESSION_TOKEN`: Session Token (đặc biệt cần cho tài khoản lab).
 
 ## Những chỗ cần thay trước khi chạy
 
@@ -35,9 +36,10 @@
 
     Chọn Secrets and variables > Actions > New repository secret.
 
-    Thêm hai secrets:
-        AWS_ACCESS_KEY: Khóa truy cập AWS.
-        AWS_SECRET_ACCESS_KEY: Khóa bí mật AWS.
+    Thêm 3 secrets:
+        AWS_ACCESS_KEY_ID: Access Key ID.
+        AWS_SECRET_ACCESS_KEY: Secret Access Key.
+        AWS_SESSION_TOKEN: Session Token (lab).
 
 - Triển khai hạ tầng với Terraform
 
