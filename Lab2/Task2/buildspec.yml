@@ -20,7 +20,6 @@ phases:
       - echo "Running taskcat to test CloudFormation template"
       - cd Lab2/Task2
       - taskcat --version
-      # IMPORTANT: do NOT use --no-delete in CI, it will leak VPC/IGW/NAT resources and quickly hit lab quotas.
       - taskcat -d test run
 
   post_build:

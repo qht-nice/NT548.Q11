@@ -7,8 +7,7 @@ tests:
   lab2-task2-infra:
     template: ./group_18.yaml
     parameters:
-      # Use the standard VocLabs keypair name (or override when running taskcat locally)
-      KeyName: vockey
+      KeyName: huyt-ec2-key
       AmiId: ami-0b8d527345fdace59
       InstanceType: t3.small
       AllowedSshCidr: 0.0.0.0/0

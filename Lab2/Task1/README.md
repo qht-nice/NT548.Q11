@@ -16,7 +16,7 @@ Nếu chạy bằng GitHub Actions, repo cần có 3 secrets (đặc biệt vớ
 - **Region**: cấu hình hiện tại dùng `ap-southeast-2`
 - **IP được phép SSH vào public EC2**: điền vào biến `allowed_ssh_ip` theo dạng `/32` (ví dụ `1.2.3.4/32`)
 
-Bạn có thể lấy IP public nhanh như sau:
+Có thể lấy IP public nhanh như sau:
 
 ```bash
 echo "$(curl -s https://checkip.amazonaws.com)/32"
