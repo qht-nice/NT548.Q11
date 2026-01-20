@@ -8,7 +8,7 @@
 - **[CẦN THAY THẾ] STACK_NAME** (CloudFormation): ví dụ `cfStack`
 
 Thông tin đã cố định trong repo:
-- **Region**: `us-east-1`
+- **Region**: `ap-southeast-2`
 - **KeyPairName** (AWS): `vockey`
 - **AMI**: `ami-0ecb62995f68bb549`
 
@@ -17,10 +17,10 @@ Thông tin đã cố định trong repo:
 ## Chuẩn bị
 
 - Cài sẵn **Terraform** và **AWS CLI**
-- Set region dùng cho lab (đúng file đang cấu hình là `us-east-1`):
+- Set region dùng cho lab (đúng file đang cấu hình là `ap-southeast-2`):
 
 ```bash
-aws configure set region us-east-1
+aws configure set region ap-southeast-2
 ```
 
 - Trên AWS có keypair tên **`vockey`**, và trên máy bạn có file private key tương ứng (ví dụ `labsuser.pem`).
@@ -106,7 +106,7 @@ cd Lab1/cloudformation
 aws cloudformation create-stack \
   --stack-name [CẦN THAY THẾ] STACK_NAME \
   --template-body file://group_18.yaml \
-  --region us-east-1
+  --region ap-southeast-2
 ```
 
 Nếu stack đã tồn tại, dùng update:
@@ -115,7 +115,7 @@ Nếu stack đã tồn tại, dùng update:
 aws cloudformation update-stack \
   --stack-name [CẦN THAY THẾ] STACK_NAME \
   --template-body file://group_18.yaml \
-  --region us-east-1
+  --region ap-southeast-2
 ```
 
 ### 3) Đợi stack xong
@@ -123,7 +123,7 @@ aws cloudformation update-stack \
 ```bash
 aws cloudformation describe-stacks \
   --stack-name [CẦN THAY THẾ] STACK_NAME \
-  --region us-east-1 \
+  --region ap-southeast-2 \
   --query "Stacks[0].StackStatus" --output text
 ```
 
@@ -132,7 +132,7 @@ aws cloudformation describe-stacks \
 ```bash
 aws cloudformation describe-stacks \
   --stack-name [CẦN THAY THẾ] STACK_NAME \
-  --region us-east-1 \
+  --region ap-southeast-2 \
   --query "Stacks[0].Outputs" --output table
 ```
 
@@ -146,7 +146,7 @@ bash ./test.sh [CẦN THAY THẾ] STACK_NAME
 ### 6) Destroy (CloudFormation)
 
 ```bash
-aws cloudformation delete-stack --stack-name [CẦN THAY THẾ] STACK_NAME --region us-east-1
+aws cloudformation delete-stack --stack-name [CẦN THAY THẾ] STACK_NAME --region ap-southeast-2
 ```
 
 ---

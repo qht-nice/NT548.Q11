@@ -1,64 +1,38 @@
-#Task1
+# Lab2 - Task 1
 
-## Hướng dẫn triển khai hạ tầng AWS sử dụng Terraform và tự động hóa quy trình với GitHub Actions
+Triển khai hạ tầng AWS bằng **Terraform** (VPC, subnets public/private, IGW, NAT, route tables, EC2, security groups) và tự động hoá deploy bằng **GitHub Actions**, kèm **Checkov** để scan bảo mật IaC.
 
-## Yêu cầu hệ thống
+## Yêu cầu
+- **Terraform** (khuyến nghị 1.5+)
+- **AWS CLI** (v2+)
+- **Git**
 
-### Công cụ cần cài đặt
-- **Terraform**: [Tải xuống tại đây](https://developer.hashicorp.com/terraform/downloads) (phiên bản 1.5 trở lên).
-- **AWS CLI**: [Tải xuống tại đây](https://aws.amazon.com/cli/) (phiên bản 2 trở lên).
-- **Git**: Để quản lý mã nguồn.
-- **Tài khoản AWS** với quyền quản trị.
+Nếu chạy bằng GitHub Actions, repo cần có 3 secrets (đặc biệt với tài khoản lab/VocLabs):
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_SESSION_TOKEN`
 
-### Các thành phần cần chuẩn bị
-- Repository GitHub chứa mã nguồn Terraform.
-- Secrets GitHub Actions:
-  - `AWS_ACCESS_KEY_ID`: Access Key ID.
-  - `AWS_SECRET_ACCESS_KEY`: Secret Access Key.
-  - `AWS_SESSION_TOKEN`: Session Token (đặc biệt cần cho tài khoản lab).
+## Cấu hình quan trọng trước khi chạy
+- **Region**: cấu hình hiện tại dùng `ap-southeast-2`
+- **IP được phép SSH vào public EC2**: điền vào biến `allowed_ssh_ip` theo dạng `/32` (ví dụ `1.2.3.4/32`)
 
-## Những chỗ cần thay trước khi chạy
+Bạn có thể lấy IP public nhanh như sau:
 
-- **[CẦN THAY THẾ] IP SSH của bạn**: cập nhật biến `allowed_ssh_ip` (dạng `/32`, ví dụ `1.2.3.4/32`)
-- **Region**: đang dùng `us-east-1`
-
-### Các bước triển khai
-
-- Tạo file pipeline 
-
-    Tạo thư mục .github/workflows trong repository của bạn.
-
-    Tạo file deploy.yml
-
-- Cấu hình GitHub Secrets
-
-    Truy cập Settings của repository.
-
-    Chọn Secrets and variables > Actions > New repository secret.
-
-    Thêm 3 secrets:
-        AWS_ACCESS_KEY_ID: Access Key ID.
-        AWS_SECRET_ACCESS_KEY: Secret Access Key.
-        AWS_SESSION_TOKEN: Session Token (lab).
-
-- Triển khai hạ tầng với Terraform
-
-    Đảm bảo thư mục Terraform nằm ở đúng chỗ: `Lab2/Task1/Terraform`
+```bash
+echo "$(curl -s https://checkip.amazonaws.com)/32"
+```
 
 ## Chạy thủ công (local)
-
 1) Vào thư mục Terraform:
 
 ```bash
 cd Lab2/Task1/Terraform
 ```
 
-2) Set IP được phép SSH (public SG):
-
-Tạo/sửa `terraform.tfvars`:
+2) Tạo/sửa `terraform.tfvars` để giới hạn SSH:
 
 ```hcl
-allowed_ssh_ip = "[CẦN THAY THẾ] YOUR_PUBLIC_IP/32"
+allowed_ssh_ip = "<YOUR_PUBLIC_IP/32>"
 ```
 
 3) Chạy Terraform:
@@ -67,46 +41,28 @@ allowed_ssh_ip = "[CẦN THAY THẾ] YOUR_PUBLIC_IP/32"
 terraform init
 terraform validate
 terraform plan
-terraform apply
+terraform apply --auto-approve
 ```
 
-Destroy:
+4) Huỷ tài nguyên (khi cần):
 
 ```bash
-terraform destroy
+terraform destroy --auto-approve
 ```
 
 ## Chạy tự động (GitHub Actions)
+- Workflow nằm ở: `.github/workflows/deploy.yml`
+- Workflow chạy khi bạn **push lên nhánh `main`**
+- Các bước chính:
+  - **Checkov** scan thư mục `Lab2/Task1/Terraform`
+  - **terraform init / validate / plan / apply** trong `Lab2/Task1/Terraform`
 
-- Workflow: `.github/workflows/deploy.yml`
-- Workflow sẽ chạy khi bạn **push lên nhánh `main`**
-- Workflow có các bước:
-  - Checkov scan thư mục `Lab2/Task1/Terraform`
-  - terraform init/validate/plan/apply trên đúng thư mục `Lab2/Task1/Terraform`
+Để trigger workflow:
 
-    Chạy pipeline
+```bash
+git add .
+git commit -m "Update Task1"
+git push origin main
+```
 
-        Đẩy mã nguồn lên nhánh main:
-
-            _git add .
-            _git commit -m "Add Terraform CI/CD pipeline"_: 
-            _git push origin main_: 
-
-    Truy cập tab Actions trên GitHub để xem tiến trình chạy pipeline.
-
-- Kiểm tra kết quả triển khai
-
-    Truy cập AWS
-
-        Đăng nhập AWS Management Console
-
-        Kiểm tra tài nguyên đã được tạo
-    
-    Xem kết quả trên GitHub Actions
-
-        Vào Actions trên GitHub repository
-
-        Chọn workflow vừa chạy để xem log chi tiết
-            
-
-
+Theo dõi kết quả ở tab **Actions** của GitHub repo.

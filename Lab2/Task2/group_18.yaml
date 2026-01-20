@@ -1,138 +1,251 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: CloudFormation template to create a VPC with public and private subnets, NAT gateway, and EC2 instances.
+Description: Lab2 Task2 - VPC (public/private), IGW, NAT, route tables, security groups, and EC2 instances.
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: CIDR block for the VPC
+
+  PublicSubnetCidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR block for the public subnet
+
+  PrivateSubnetCidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: CIDR block for the private subnet
+
+  AllowedSshCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Your public IP in CIDR form (example 1.2.3.4/32) allowed to SSH to public instance
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: vockey
+    Description: Existing EC2 key pair name (lab usually provides vockey)
+
+  AmiId:
+    Type: AWS::EC2::Image::Id
+    Default: ami-0b8d527345fdace59
+    Description: AMI ID for EC2 instances (ap-southeast-2)
+
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+    Description: EC2 instance type
 
 Resources:
-  # Tạo VPC
   MyVPC:
     Type: AWS::EC2::VPC
     Properties: 
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: MyVPC
+          Value: Task2-VPC
   
-  # Tạo Internet Gateway
   MyInternetGateway:
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Task2-IGW
+
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref MyVPC
       InternetGatewayId: !Ref MyInternetGateway
 
-  # Tạo Public Subnet
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: !Ref PublicSubnetCidr
       MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [ 0, !GetAZs ]
+      AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
         - Key: Name
-          Value: PublicSubnet
+          Value: Task2-PublicSubnet
 
-  # Tạo Private Subnet
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs ]
+      CidrBlock: !Ref PrivateSubnetCidr
+      AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
         - Key: Name
-          Value: PrivateSubnet
+          Value: Task2-PrivateSubnet
 
-  # Tạo Route Table cho Public Subnet
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: Task2-PublicRT
+
   PublicRoute:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref MyInternetGateway
+
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref PublicRouteTable
 
-  # Tạo NAT Gateway
-  MyNATGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      SubnetId: !Ref PublicSubnet
-      AllocationId: !GetAtt MyElasticIP.AllocationId
-
   MyElasticIP:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
 
-  # Tạo Route Table cho Private Subnet
+  MyNATGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      AllocationId: !GetAtt MyElasticIP.AllocationId
+      Tags:
+        - Key: Name
+          Value: Task2-NAT
+
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: Task2-PrivateRT
+
   PrivateRoute:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref MyNATGateway
+
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
 
-  # Security Group cho Public EC2 instance
+  DefaultSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Default security group for Task2 VPC
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: !Ref VpcCidr
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Task2-DefaultSG
+
   PublicEC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow SSH access
+      GroupDescription: Public EC2 SG - allow SSH from AllowedSshCidr
       VpcId: !Ref MyVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 113.161.91.56/32
+          CidrIp: !Ref AllowedSshCidr
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Task2-PublicEC2-SG
 
-  # Security Group cho Private EC2 instance
   PrivateEC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow SSH from Public instance
+      GroupDescription: Private EC2 SG - allow SSH only from PublicEC2SecurityGroup
       VpcId: !Ref MyVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           SourceSecurityGroupId: !Ref PublicEC2SecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Task2-PrivateEC2-SG
 
-  # EC2 Instance trong Public Subnet
   PublicEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t3.small
+      InstanceType: !Ref InstanceType
       SubnetId: !Ref PublicSubnet
-      SecurityGroupIds: 
+      SecurityGroupIds:
         - !Ref PublicEC2SecurityGroup
-      KeyName: cloudfins
-      ImageId: ami-0ebfd941bbafe70c6  
+      KeyName: !Ref KeyName
+      ImageId: !Ref AmiId
+      Tags:
+        - Key: Name
+          Value: Task2-PublicEC2
 
-  # EC2 Instance trong Private Subnet
   PrivateEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t3.small
+      InstanceType: !Ref InstanceType
       SubnetId: !Ref PrivateSubnet
-      SecurityGroupIds: 
+      SecurityGroupIds:
         - !Ref PrivateEC2SecurityGroup
-      KeyName: cloudfins
-      ImageId: ami-0ebfd941bbafe70c6 
+      KeyName: !Ref KeyName
+      ImageId: !Ref AmiId
+      Tags:
+        - Key: Name
+          Value: Task2-PrivateEC2
+
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value: !Ref MyVPC
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: !Ref PublicSubnet
+  PrivateSubnetId:
+    Description: Private Subnet ID
+    Value: !Ref PrivateSubnet
+  InternetGatewayId:
+    Description: Internet Gateway ID
+    Value: !Ref MyInternetGateway
+  NatGatewayId:
+    Description: NAT Gateway ID
+    Value: !Ref MyNATGateway
+  PublicSecurityGroupId:
+    Description: Public EC2 SG ID
+    Value: !Ref PublicEC2SecurityGroup
+  PrivateSecurityGroupId:
+    Description: Private EC2 SG ID
+    Value: !Ref PrivateEC2SecurityGroup
+  PublicInstanceId:
+    Description: Public EC2 Instance ID
+    Value: !Ref PublicEC2Instance
+  PrivateInstanceId:
+    Description: Private EC2 Instance ID
+    Value: !Ref PrivateEC2Instance
+  PublicInstancePublicIp:
+    Description: Public IP of public instance
+    Value: !GetAtt PublicEC2Instance.PublicIp

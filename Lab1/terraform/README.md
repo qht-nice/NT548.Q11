@@ -1,78 +1,53 @@
-# NT548.P11
+# Lab1 (Terraform)
 
-## Hướng Dẫn Thiết Lập Hạ Tầng AWS Bằng Terraform
+Tài liệu này hướng dẫn chạy phần Terraform của Lab1 để tạo hạ tầng AWS gồm: **VPC**, **Public/Private Subnet**, **Internet Gateway**, **NAT Gateway**, **Route Tables**, **Security Groups**, và **2 EC2 instances** (1 public, 1 private).
 
-### Mô tả
+## Yêu cầu
+- **Terraform** (khuyến nghị 1.3+)
+- **AWS CLI** (v2+), và bạn đã đăng nhập AWS (ví dụ dùng `aws configure` hoặc credentials của lab)
 
-Sử dụng Terraform để triển khai hạ tầng AWS với các thành phần chính như sau:
+## Cấu hình quan trọng trước khi chạy
+- **Region**: theo cấu hình trong `main.tf` (repo đang dùng `ap-southeast-2`)
+- **KeyPair**: EC2 dùng key pair có sẵn (ví dụ `vockey` theo lab)
+- **IP được phép SSH vào public EC2**: cấu hình qua biến `allowed_ssh_ip` (dạng `/32`)
 
-_VPC_: Tạo VPC với Public Subnet (kết nối Internet) và Private Subnet (sử dụng NAT Gateway). Bao gồm Internet Gateway và Default Security Group.
+Lấy IP public nhanh:
 
-_Route Tables_: Cấu hình Public Route Table cho lưu lượng Internet qua Internet Gateway và Private Route Table cho lưu lượng qua NAT Gateway.
+```bash
+echo "$(curl -s https://checkip.amazonaws.com)/32"
+```
 
-_NAT Gateway_: Cho phép kết nối Internet cho tài nguyên trong Private Subnet với tính bảo mật.
+## Cách chạy
+1) Vào thư mục Terraform:
 
-_EC2 Instances_: Tạo Public EC2 Instance có thể truy cập từ Internet và Private EC2 Instance chỉ có thể truy cập từ Public EC2 Instance. Các Instance này sử dụng một cặp khóa RSA để có thể truy cập vào.
+```bash
+cd Lab1/terraform
+```
 
-_Security Groups_: Kiểm soát lưu lượng vào/ra cho các EC2 Instances với Public Security Group cho phép kết nối SSH từ IP cụ thể và Private Security Group cho phép kết nối từ Public EC2 Instance.
+2) (Khuyến nghị) tạo/sửa `terraform.tfvars` để giới hạn SSH:
 
-### Yêu cầu
+```hcl
+allowed_ssh_ip = "<YOUR_PUBLIC_IP/32>"
+```
 
-Trước khi bắt đầu triển khai hạ tầng trên AWS bằng Terraform, cần chuẩn bị các tài nguyên:
+3) Triển khai:
 
-_Terraform_: Cài đặt Terraform từ trang chủ Terraform nếu chưa cài đặt. Đảm bảo sử dụng phiên bản từ 1.3.0 trở lên.
+```bash
+terraform init
+terraform validate
+terraform plan
+terraform apply --auto-approve
+```
 
-_AWS CLI_: Cài đặt AWS Command Line Interface (CLI) từ trang chủ AWS CLI để tương tác với AWS từ dòng lệnh.
+4) Huỷ tài nguyên (khi cần):
 
-_IAM (Identity and Access Management)_: Là dịch vụ của AWS cho phép quản lý quyền truy cập vào các dịch vụ và tài nguyên của AWS.
+```bash
+terraform destroy --auto-approve
+```
 
-### Các bước triển khai
-
-- Tạo user IAM:
-
-    Trong AWS Management Console, truy cập vào phần IAM để tạo một user mới.
-
-    Tạo một người dùng IAM mới và cấp quyền phù hợp (ở đây ta cấp quyền AdministratorAccess).
-
-    Tạo và lưu Access Key và Secret Key cho user mới này.
-
-- Cấu Hình Tài Khoản profile Bằng AWS CLI:
-
-    Mở terminal hoặc command prompt và chạy lệnh sau để cấu hình profile cho user IAM: 
-
-    `aws configure --profile terraform-user`
-
-    Điền các thông tin sau:
-
-        _AWS Access Key ID_: Nhập Access Key của người dùng IAM.
-        _AWS Secret Access Key_: Nhập Secret Key của người dùng IAM.
-        _Default region name_: Nhập vùng (region) mà ta muốn sử dụng, ví dụ: us-east-1.
-        _Default output format_: Chọn định dạng đầu ra, có thể để trống hoặc nhập json.
-
-    Để kiểm tra cấu hình của profile AWS CLI, sử dụng lệnh
-
-    `aws configure list --profile terraform-user`
-
-
-- Clone project về và điều hướng vào thư mục chứa file [**main.tf**](./main.tf).
-
-- Thực hiện lần lượt các lệnh sau:
-
-    `terraform init`: Lệnh bắt buộc cần thực hiện đầu tiên để khởi tạo một Terraform Project.
-
-    `terraform validate`: Sẽ tiến hành kiểm tra tất cả các Terraform configuration để đảm bảo rằng toàn bộ syntax đều chính xác. Thường sử dụng sau khi configuration files được sửa chữa để kiểm tra hợp lệ.
-
-    `terraform plan`: Hiển thị ra những resource nào sẽ được tạo và kiểm tra lỗi syntax.
-
-    `terraform apply`: Triển khai các resource được tạo trong plan. Khi chạy câu lệnh apply, thì terraform sẽ chạy lại câu lệnh plan, và sẽ hiện ra một thông báo để xác nhận tạo resource. Gõ 'yes' để tạo các resource sau khi đã kiểm tra.
-
-    `terraform destroy`: là lệnh dùng destroy tất cả resource.
-
-### Lưu ý
-
-Sau khi triển khai các resource bằng lệnh `terraform plan`, đăng nhập AWS để kiểm tra các resource vừa tạo và trạng thái của chúng.
-
-Sau lưu khóa RSA được tạo ra từ [**main.tf**](./main.tf) để có thể truy cập vào các instance EC2.
+## Gợi ý kiểm tra sau khi apply
+- Dùng `terraform output` để lấy `public_instance_public_ip` và thử SSH vào public instance.
+- Từ public instance, SSH tiếp vào private instance bằng private IP.
 
 
 

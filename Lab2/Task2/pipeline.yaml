@@ -1,0 +1,266 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lab2 Task2 (FULL FLOW) - CodeCommit + CodeBuild (cfn-lint, taskcat) + CodePipeline deploy CloudFormation.
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: nt548-lab2-task2
+    Description: CodeCommit repository name (created by this stack)
+
+  BranchName:
+    Type: String
+    Default: main
+    Description: Branch to trigger pipeline
+
+  PipelineName:
+    Type: String
+    Default: nt548-task2-pipeline
+    Description: CodePipeline name
+
+  BuildProjectName:
+    Type: String
+    Default: nt548-task2-build
+    Description: CodeBuild project name
+
+  InfraStackName:
+    Type: String
+    Default: nt548-task2-infra
+    Description: CloudFormation stack name for the infrastructure (group_18.yaml)
+
+  DeployKeyName:
+    Type: String
+    Default: huyt-ec2-key
+    Description: EC2 KeyPair name for infra stack (must exist in ap-southeast-2)
+
+  DeployAmiId:
+    Type: String
+    Default: ami-0b8d527345fdace59
+    Description: AMI ID for infra EC2 instances (ap-southeast-2)
+
+  DeployAllowedSshCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR allowed to SSH to public instance (example 1.2.3.4/32)
+
+  ArtifactBucketName:
+    Type: String
+    Default: ""
+    Description: Optional. Leave empty to auto-generate an S3 bucket name for CodePipeline artifacts.
+
+Conditions:
+  UseCustomArtifactBucketName: !Not [!Equals [!Ref ArtifactBucketName, ""]]
+
+Resources:
+  CodeCommitRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Ref RepositoryName
+      RepositoryDescription: NT548 Lab2 Task2 source repo
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If [UseCustomArtifactBucketName, !Ref ArtifactBucketName, !Ref "AWS::NoValue"]
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: codebuild-task2
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                  - ec2:*
+                  - s3:*
+                Resource: "*"
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: codepipeline-task2
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "${ArtifactBucket.Arn}"
+                  - !Sub "${ArtifactBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - codecommit:GetBranch
+                  - codecommit:GetCommit
+                  - codecommit:UploadArchive
+                  - codecommit:GetUploadArchiveStatus
+                  - codecommit:CancelUploadArchive
+                Resource: !GetAtt CodeCommitRepo.Arn
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:GetTemplateSummary
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: "*"
+
+  CloudFormationDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: cfn-deploy-task2
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: "*"
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref BuildProjectName
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        Type: LINUX_CONTAINER
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: Lab2/Task2/buildspec.yml
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Ref PipelineName
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: "1"
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                RepositoryName: !Ref RepositoryName
+                BranchName: !Ref BranchName
+                PollForSourceChanges: true
+              RunOrder: 1
+
+        - Name: Build
+          Actions:
+            - Name: LintAndTaskcat
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              RunOrder: 1
+
+        - Name: Deploy
+          Actions:
+            - Name: DeployInfra
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              InputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Ref InfraStackName
+                Capabilities: CAPABILITY_NAMED_IAM
+                RoleArn: !GetAtt CloudFormationDeployRole.Arn
+                TemplatePath: SourceOutput::Lab2/Task2/group_18.yaml
+                ParameterOverrides: !Sub |
+                  {"KeyName":"${DeployKeyName}","AmiId":"${DeployAmiId}","AllowedSshCidr":"${DeployAllowedSshCidr}"}
+              RunOrder: 1
+
+Outputs:
+  RepositoryCloneUrlHttp:
+    Description: CodeCommit HTTP clone URL (use credential helper)
+    Value: !GetAtt CodeCommitRepo.CloneUrlHttp
+  RepositoryName:
+    Description: CodeCommit repository name
+    Value: !Ref RepositoryName
+  PipelineName:
+    Description: CodePipeline name
+    Value: !Ref PipelineName
+

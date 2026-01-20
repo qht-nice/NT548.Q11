@@ -274,7 +274,7 @@ cd Lab1/cloudformation
 aws cloudformation create-stack \
   --stack-name cfStack \
   --template-body file://group_18.yaml \
-  --region us-east-1
+  --region ap-southeast-2
 
 # Chờ stack tạo xong, sau đó chạy test
 ./test.sh MyVPCStack
@@ -296,7 +296,7 @@ Tất cả các test cases tự động phải PASSED để đảm bảo infrast
 
 3. **Key Pair**: Đảm bảo bạn có key pair đúng để SSH vào instances.
 
-4. **Region**: Scripts mặc định sử dụng region `us-east-1`. Nếu bạn dùng region khác, cần cập nhật trong scripts hoặc set environment variable `AWS_DEFAULT_REGION`.
+4. **Region**: Scripts mặc định sử dụng region `ap-southeast-2`. Nếu bạn dùng region khác, cần cập nhật trong scripts hoặc set environment variable `AWS_DEFAULT_REGION`.
 
 5. **AWS Credentials**: Đảm bảo AWS credentials đã được cấu hình đúng (`aws configure`) và có quyền đọc (`Describe*`) để chạy test scripts.
 

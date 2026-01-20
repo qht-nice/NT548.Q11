@@ -3,21 +3,25 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.8  
+      python: 3.11
+    commands:
       - echo "Installing dependencies"
       - pip install --upgrade pip
-      - pip install cfn-lint
-      - pip install taskcat
+      - pip install cfn-lint taskcat
 
   pre_build:
     commands:
+      - echo "PWD=$(pwd)"
       - echo "Running cfn-lint to check CloudFormation template syntax"
-      - cfn-lint group_18.yaml  
+      - cfn-lint -t Lab2/Task2/group_18.yaml
 
   build:
     commands:
-      - echo "Running Taskcat to test CloudFormation template in multiple regions"
-      - taskcat test run --no-delete   
+      - echo "Running taskcat to test CloudFormation template"
+      - cd Lab2/Task2
+      - taskcat --version
+      # IMPORTANT: do NOT use --no-delete in CI, it will leak VPC/IGW/NAT resources and quickly hit lab quotas.
+      - taskcat -d test run
 
   post_build:
     commands:
@@ -25,4 +29,5 @@ phases:
       
 artifacts:
   files:
-    - group_18.yaml  
+    - Lab2/Task2/group_18.yaml
+    - Lab2/Task2/.taskcat.yml

@@ -1,6 +1,6 @@
 resource "aws_security_group" "public_security_group" {
-  name        = "allow_ssh_to_public"
-  vpc_id      = var.vpc_id
+  name   = "allow_ssh_to_public"
+  vpc_id = var.vpc_id
 
   ingress {
     description = "Allow SSH from specified sources"
@@ -11,7 +11,7 @@ resource "aws_security_group" "public_security_group" {
 
   }
 
-  egress  {
+  egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -24,18 +24,18 @@ resource "aws_security_group" "public_security_group" {
 }
 
 resource "aws_security_group" "private_security_group" {
-  name        = "allow_ssh_from_public"
-  vpc_id      = var.vpc_id
+  name   = "allow_ssh_from_public"
+  vpc_id = var.vpc_id
 
   ingress {
-    description = "Allow SSH from public instances"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+    description     = "Allow SSH from public instances"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
     security_groups = [aws_security_group.public_security_group.id]
   }
 
-  egress  {
+  egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
