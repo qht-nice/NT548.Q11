@@ -104,8 +104,6 @@ pip install --user cfn-lint taskcat
 
 ### D) Upgrade AWS CLI (nếu cần)
 
-> Upgrade AWS CLI **không** vượt qua được policy “explicit deny”, nhưng giúp tránh lỗi version/cfn-lint/taskcat trên máy.
-
 Kiểm tra version:
 
 ```bash

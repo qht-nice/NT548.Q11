@@ -25,7 +25,4 @@ git commit -m "Update submodule netflix-clone-devsecops"
 Trong Jenkins job, trỏ pipeline tới file:
 - `Lab2/Task3/netflix-clone-devsecops/Jenkinsfile`
 
-> Nếu bạn muốn chỉnh Jenkinsfile theo yêu cầu môn (SonarQube/Trivy/K8s deploy), bạn có 2 cách:
-> - Fork submodule repo và sửa trong fork
-> - Hoặc không sửa submodule trực tiếp, mà tạo Jenkinsfile riêng ở repo chính và `dir('Lab2/Task3/netflix-clone-devsecops'){ ... }`
 
